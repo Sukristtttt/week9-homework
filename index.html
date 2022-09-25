@@ -1,27 +1,108 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!-- Import Vega & Vega-Lite (does not have to be from CDN) -->
-  <script src="https://cdn.jsdelivr.net/npm/vega@5.20.2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.1.0"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.17.0"></script>
-  
-  <!-- CSS file -->
-  <link rel="stylesheet" type="text/css" href="css/styles.css" media="all">
-
-
+  <script src="https://cdn.jsdelivr.net/npm/vega@5.22.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.2.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.20.8"></script>
 </head>
 <body>
-  
-<div id="choropleth_map"></div>
-
-<script type="text/javascript">
-
-  var spec2 = "js/choropleth_map.vg.json";
-  vegaEmbed('#choropleth_map', spec2).then(function(result) {
-    // Access the Vega view instance (https://vega.github.io/vega/docs/api/view/) as result.view
-  }).catch(console.error);
-</script>
-
+  <div id="vis"/>
+  <script>
+    const spec = {
+  "$schema": "https://vega.github.io/schema/vega/v5.json",
+  "background": "white",
+  "padding": 5,
+  "width": 800,
+  "height": 500,
+  "title": {"text": "Coffee bean production Worldwide", "frame": "group"},
+  "data": [
+    {
+      "name": "source_1",
+      "url": "https://raw.githubusercontent.com/Sukristtttt/3179/main/coffee-bean-production-lattest.csv",
+      "format": {"type": "csv", "delimiter": ","}
+    },
+    {
+      "name": "source_0",
+      "url": "https://raw.githubusercontent.com/Sukristtttt/3179/main/ne_110m-lattest.topojson",
+      "format": {
+        "type": "topojson",
+        "feature": "ne_110m_admin_0_countries",
+        "parse": {}
+      },
+      "transform": [
+        {
+          "type": "formula",
+          "expr": "datum[\"properties\"] && datum[\"properties\"][\"NAME\"]",
+          "as": "properties.NAME"
+        },
+        {
+          "type": "lookup",
+          "from": "source_1",
+          "key": "Country",
+          "fields": ["properties.NAME"],
+          "values": ["Production"]
+        },
+        {
+          "type": "formula",
+          "expr": "datum.Production + 0.1",
+          "as": "Production In Tonnes"
+        },
+        {
+          "type": "filter",
+          "expr": "isValid(datum[\"Production In Tonnes\"]) && isFinite(+datum[\"Production In Tonnes\"])"
+        }
+      ]
+    }
+  ],
+  "projections": [
+    {
+      "name": "projection",
+      "size": {"signal": "[width, height]"},
+      "fit": {"signal": "data('source_0')"},
+      "type": "equalEarth"
+    }
+  ],
+  "marks": [
+    {
+      "name": "marks",
+      "type": "shape",
+      "style": ["geoshape"],
+      "from": {"data": "source_0"},
+      "encode": {
+        "update": {
+          "fill": {"scale": "color", "field": "Production In Tonnes"},
+          "tooltip": {
+            "signal": "{\"Country\": isValid(datum[\"properties.NAME\"]) ? datum[\"properties.NAME\"] : \"\"+datum[\"properties.NAME\"], \"Production\": format(datum[\"Production\"], \"\")}"
+          },
+          "ariaRoleDescription": {"value": "geoshape"},
+          "description": {
+            "signal": "\"Production In Tonnes: \" + (format(datum[\"Production In Tonnes\"], \"\")) + \"; Country: \" + (isValid(datum[\"properties.NAME\"]) ? datum[\"properties.NAME\"] : \"\"+datum[\"properties.NAME\"]) + \"; Production: \" + (format(datum[\"Production\"], \"\"))"
+          }
+        }
+      },
+      "transform": [{"type": "geoshape", "projection": "projection"}]
+    }
+  ],
+  "scales": [
+    {
+      "name": "color",
+      "type": "threshold",
+      "domain": [1, 10000000, 20000000],
+      "range": ["#fee5d9", "#fcae91", "#fb6a4a", "#cb181d"],
+      "interpolate": "hcl"
+    }
+  ],
+  "legends": [
+    {
+      "fill": "color",
+      "labelOverlap": "greedy",
+      "symbolType": "circle",
+      "title": "Production In Tonnes"
+    }
+  ],
+  "config": {}
+};
+    vegaEmbed("#vis", spec, {mode: "vega"}).then(console.log).catch(console.warn);
+  </script>
 </body>
 </html>
