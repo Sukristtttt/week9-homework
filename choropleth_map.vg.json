@@ -1,6 +1,6 @@
 {
   "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-  "title": "Coffee bean production Worldwide 2020",
+  "title": "Coffee bean production Worldwide in 2020",
   "width": 800,
   "height": 500,
   "projection": {"type": "equalEarth"},
